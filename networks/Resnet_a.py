@@ -24,8 +24,9 @@ class Resnet_a(nn.Module):
 		
 
 	# x1 = pu, x2 = p1, x3 = p2, x4 = bbox geometric info
-	def forward(self, x): 
-		x = self.resnet50(x).view(-1)
+	def forward(self, x):
+		x = x.view(-1, 3, 224, 224)
+		x = self.resnet50(x).view(-1, 2048)
 		x = self.classifier(x).view(-1, 1, self.num_frame, self.num_class)
-		x = self.avgpool(x)
+		x = self.avgpool(x).view(-1, self.num_class)
 		return x

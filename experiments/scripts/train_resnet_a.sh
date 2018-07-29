@@ -17,7 +17,7 @@ batch_size=8
 # momentum
 momentum=0.9
 # Number of classes
-num=6
+num=51
 # Worker number
 worker=7
 

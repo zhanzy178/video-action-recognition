@@ -50,7 +50,7 @@ class HMDB51Dataset(data.Dataset):
 				video_path = os.path.join(self.video_dir, self.class_dict[int(label)], video_name)
 				single_frame_dir = os.path.join(self.frame_dir, os.path.splitext(video_name)[0])
 
-				self.label_list.append(label)
+				self.label_list.append(int(label))
 				video_path_list.append(video_path)
 				self.sample_list.append(single_frame_dir)
 		
@@ -115,11 +115,10 @@ class HMDB51Dataset(data.Dataset):
 			img = Image.open(os.path.join(self.sample_list[index], str(i)+'.jpg')).convert('RGB') # convert gray to rgb
 			if self.input_transform:
 				img = self.input_transform(img)
+			if type(frames) == type(None):
+				frames = torch.Tensor(size=(self.num_frame, img.size(0), img.size(1), img.size(2)))
 			
-			if frames == None:
-				frame = torch.Tensor(size=(self.num_frame, img.size(0), img.size(1)))
-
-			frame[i, :, :] = img
+			frames[i, :, :, :] = img
 		
 		return frames, self.label_list[index]
 

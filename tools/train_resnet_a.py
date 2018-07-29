@@ -169,10 +169,10 @@ def train_eval(train_loader, val_loader, model, criterion, optimizer, args, epoc
 		# Jump to contextual batch
 		if i < b_batch:
 			continue
-
+		target = target.cuda(async=True)
 		frames = frames.cuda()
 		output = model(frames)
-		
+			
 		loss = criterion(output, target)
 		losses.update(loss.item(), target.size(0))
 		prec1 = accuracy(output.data, target)
@@ -244,15 +244,14 @@ def validate_eval(val_loader, model, criterion, args, epoch=None, fnames=[]):
 	labels = np.zeros((len(val_loader.dataset), ))
 	for i, (frames, target) in enumerate(val_loader):
 		with torch.no_grad():
-			frames = frames.cuda()
-
+			target = target.cuda(async=True)
 			frames = frames.cuda()
 			output = model(frames)
 			
 			loss = criterion(output, target)
 			losses.update(loss.item(), target.size(0))
 			prec1 = accuracy(output.data, target)
-			top1.update(prec1[0], union.size(0))
+			top1.update(prec1[0], target.size(0))
 
 			batch_time.update(time.time() - end)
 			end = time.time()
