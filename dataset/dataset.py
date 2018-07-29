@@ -63,10 +63,6 @@ class HMDB51Dataset(data.Dataset):
 
 			
 	def _extract_frames(self, video_path_list, refresh=False):
-		if os.path.isdir(self.frame_dir):
-			shutil.rmtree(self.frame_dir)
-		os.mkdir(self.frame_dir)
-		
 		lines_len = len(video_path_list)
 		for i, video_path in enumerate(video_path_list):
 			single_frame_dir = self.sample_list[i]
