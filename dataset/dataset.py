@@ -53,14 +53,13 @@ class HMDB51Dataset(data.Dataset):
 		if not os.path.isdir(frame_dir):
 			os.mkdir(frame_dir)
 		self.frame_dir  = os.path.join(frame_dir, str(num_frame))
-		if refresh or not os.path.isdir(self.frame_dir):
-			self._create_frames(video_path_list)
-		else:
-			print('====> Frames have been prepared...')
-
+		if os.path.isdir(self.frame_dir):
+			os.mkdir(self.frame_dir)
+		self._create_frames(video_path_list, refresh=refresh)
+		
 
 			
-	def _create_frames(self, video_path_list):
+	def _create_frames(self, video_path_list, refresh=False):
 		if os.path.isdir(self.frame_dir):
 			shutil.rmtree(self.frame_dir)
 		os.mkdir(self.frame_dir)
@@ -68,30 +67,33 @@ class HMDB51Dataset(data.Dataset):
 		lines_len = len(video_path_list)
 		for i, video_path in enumerate(video_path_list):
 			single_frame_dir = self.sample_list[i]
-			sample_list.apend(single_frame_dir)
+			if not os.path.isdir(single_frame_dir):
+				os.mkdir(single_frame_dir)
 
-			# Extract frame.
-			capturer = cv2.VideoCapture(video_path)
+			if len(os.listdir(single_frame_dir)) != self.num_frame or refresh:
+				# Extract frame.
+				capturer = cv2.VideoCapture(video_path)
 
-			frame_cnt = capturer.get(cv2.CAP_PROP_FRAME_COUNT)
-			frame_splice = np.floor(np.linspace(0, frame_cnt, self.num_frame+1))
-			frame_rand_ind = [np.random.randint(frame_splice[x], frame_splice[x+1]) for x in range(len(frame_splice)-1)]
+				frame_cnt = capturer.get(cv2.CAP_PROP_FRAME_COUNT)
+				frame_splice = np.floor(np.linspace(0, frame_cnt, self.num_frame+1))
+				frame_rand_ind = [np.random.randint(frame_splice[x], frame_splice[x+1]) for x in range(len(frame_splice)-1)]
 
-			c = 0
-			ind = 0
-			while capturer.isOpened():   # Read every frame
-				ret, vframe = capturer.read()
-				if ret:
-					if(frame_rand_ind[ind] == c): 
-						cv2.imwrite(os.path.join(single_frame_dir, str(ind)+'.jpg'), vframe)
-						ind += 1
-					c = c + 1
-				else:
-					break
-			capturer.release()
-			print '/t====> %d/%d'%(i, lines_len),
+				c = 0
+				ind = 0
+				while capturer.isOpened():   # Read every frame
+					ret, vframe = capturer.read()
+					if ret:
+						if(frame_rand_ind[ind] == c):
+							frame_item_path = os.path.join(single_frame_dir, str(ind)+'.jpg')
+							cv2.imwrite(frame_item_path, vframe)
+							ind += 1
+						c = c + 1
+					else:
+						break
+				capturer.release()
+			print '/t====> %d/%d frames prepared'%(i, lines_len),
 			
-			print('...frames prepared')
+		print('...frames prepared')
 				
 
 
