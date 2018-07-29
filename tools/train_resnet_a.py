@@ -33,10 +33,15 @@ parser = argparse.ArgumentParser(description='PyTorch Relationship')
 
 """The dataset file arguments.
 """
-parser.add_argument('data', metavar='DIR', help='path to dataset')
-parser.add_argument('objects', metavar='DIR', help='path to objects (bboxes and categories)')
-parser.add_argument('trainlist', metavar='DIR', help='path to train list')
-parser.add_argument('testlist', metavar='DIR', help='path to test list')
+parser.add_argument('video', metavar='DIR', help='Directory to HMDB51 video')
+parser.add_argument('frame', metavar='DIR', help='Directory to HMDB51 frame')
+parser.add_argument('meta', metavar='DIR', help='Path to HMDB51 51 class meta information')
+parser.add_argument('trainlist', metavar='DIR', help='Path to HMDB51 train list')
+parser.add_argument('testlist', metavar='DIR', help='Path to HMDB51 test list')
+parser.add_argument('--num-frame', default=10, type=int,
+					help='Number of frames that extract from video')
+parser.add_argument('--refresh', default=0, type=int,
+					help='Refresh flag for clearing frames and create new one')
 
 
 """The training arguments including optimizer's arguments.
@@ -57,7 +62,7 @@ parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
 # secondary
 parser.add_argument('--world-size', default=1, type=int,
 					help='number of distributed processes')
-parser.add_argument('-n', '--num-classes', default=3, type=int, metavar='N',
+parser.add_argument('-n', '--num-class', default=3, type=int, metavar='N',
 					help='number of classes / categories')
 parser.add_argument('--crop-size',default=224, type=int,
 					help='crop size')
@@ -93,9 +98,9 @@ def main():
 	train_loader = get_train_loader(args)
 	test_loader = get_test_loader(args)
 
-	# Load First Glance network.
+	# Load Resnet_a network.
 	print '====> Loading the network...'
-	model = First_Glance(num_classes=args.num_classes, pretrained=True)
+	model = Resnet_a(num_class=args.num_class, num_frame=args.num_frame, pretrained=True)
 
 	"""Load checkpoint and weight of network.
 	"""
@@ -104,13 +109,12 @@ def main():
 		cp_recorder = Checkpoint(args.checkpoint_dir, args.checkpoint_name)
 		cp_recorder.load_checkpoint(model)
 	
-
 	model.cuda()
 	criterion = nn.CrossEntropyLoss().cuda()
 	cudnn.benchmark = True
 	optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.wd, momentum=args.momentum)
 			
-	# Train first-glance model.
+	# Train Resnet_a model.
 	print '====> Training...'
 	for epoch in range(cp_recorder.contextual['b_epoch'], args.epoch):
 		_, _, prec_tri, rec_tri, ap_tri = train_eval(train_loader, test_loader, model, criterion, optimizer, args, epoch)
@@ -153,7 +157,7 @@ def train_eval(train_loader, val_loader, model, criterion, optimizer, args, epoc
 	model.eval()
 
 	end = time.time()
-	scores = np.zeros((len(train_loader.dataset), args.num_classes))
+	scores = np.zeros((len(train_loader.dataset), args.num_class))
 	labels = np.zeros((len(train_loader.dataset), ))
 
 	# Checkpoint begin batch.
@@ -161,24 +165,18 @@ def train_eval(train_loader, val_loader, model, criterion, optimizer, args, epoc
 	if epoch == cp_recorder.contextual['b_epoch']:
 		b_batch = cp_recorder.contextual['b_batch']+1
 	
-	for i, (union, obj1, obj2, bpos, target, _, _, _) in enumerate(train_loader):
+	for i, (frames, target) in enumerate(train_loader):
 		# Jump to contextual batch
 		if i < b_batch:
 			continue
 
-		target = target.cuda(async=True)
-		union = union.cuda()
-		obj1 = obj1.cuda()
-		obj2 = obj2.cuda()
-		bpos = bpos.cuda()
-		
-		output, _ = model(union, obj1, obj2, bpos)
+		frames = frames.cuda()
+		output = model(frames)
 		
 		loss = criterion(output, target)
-		losses.update(loss.item(), union.size(0))
-
+		losses.update(loss.item(), target.size(0))
 		prec1 = accuracy(output.data, target)
-		top1.update(prec1[0], union.size(0))
+		top1.update(prec1[0], target.size(0))
 
 		optimizer.zero_grad()
 		loss.backward()
@@ -242,20 +240,17 @@ def validate_eval(val_loader, model, criterion, args, epoch=None, fnames=[]):
 	model.eval()
 
 	end = time.time()
-	scores = np.zeros((len(val_loader.dataset), args.num_classes))
+	scores = np.zeros((len(val_loader.dataset), args.num_class))
 	labels = np.zeros((len(val_loader.dataset), ))
-	for i, (union, obj1, obj2, bpos, target, _, _, _) in enumerate(val_loader):
+	for i, (frames, target) in enumerate(val_loader):
 		with torch.no_grad():
-			target = target.cuda(async=True)
-			union = union.cuda()
-			obj1 = obj1.cuda()
-			obj2 = obj2.cuda()
-			bpos = bpos.cuda()
+			frames = frames.cuda()
 
-			output, _ = model(union, obj1, obj2, bpos)
+			frames = frames.cuda()
+			output = model(frames)
 			
 			loss = criterion(output, target)
-			losses.update(loss.item(), union.size(0))
+			losses.update(loss.item(), target.size(0))
 			prec1 = accuracy(output.data, target)
 			top1.update(prec1[0], union.size(0))
 

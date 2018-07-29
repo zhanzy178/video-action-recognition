@@ -9,7 +9,7 @@ mkdir ./experiments/history
 # Train epoch
 epoch=100
 # Learning rate
-lr=0.0001
+lr=0.001
 # Weight decay
 weight_decay=0.0001
 # Batch size for train
@@ -22,14 +22,21 @@ num=6
 worker=7
 
 ################## Dataset arguments ###############
-# Path to Images
-ImagePath="data/PISC/image"
-# Path to object boxes
-ObjectsPath="data/objects/PISC_objects/"
-# Path to test list
-TrainList="data/list/PISC_fine_level_train.txt"
-# Path to test list
-TestList="data/list/PISC_fine_level_test.txt"
+# Directory to HMDB51 video
+VideoDir="data/HMDB51/video"
+# Directory to HMDB51 frame
+FrameDir="data/HMDB51/frame"
+# Path to HMDB51 51 class meta information.
+MetaPath="data/HMDB51/meta.txt"
+# Path to HMDB51 train list
+TrainListPath="data/HMDB51/train_list.txt" 
+# Path to HMDB51 test list
+TestListPath="data/HMDB51/test_list.txt" 
+
+# Number of frames that extract from video.
+num_frame=10
+# Refresh flag for clearing frames and create new one.
+refresh=0
 
 
 ################## Record arguments ###############
@@ -43,10 +50,13 @@ CheckpointDir="models/"
 FileName="resnet_a"
 
 CUDA_VISIBLE_DEVICES=0 python ./tools/train_resnet_a.py \
-    $ImagePath \
-    $ObjectsPath \
-    $TrainList \
-    $TestList \
+    $VideoDir \
+    $FrameDir \
+    $MetaPath \
+    $TrainListPath \
+    $TestListPath \ 
+    --num-frame $num_frame \
+    --refresh $refresh \
     -n $num \
     -b $batch_size \
     --lr $lr \

@@ -9,7 +9,7 @@ import torch.utils.model_zoo as model_zoo
 import torchvision.models as models
 
 class Resnet_a(nn.Module):
-	def __init__(self, num_class = 51, self.num_frame = 10, pretrained=False):
+	def __init__(self, num_class = 51, num_frame = 10, pretrained=False):
 		super(person_pair, self).__init__()
 		# Args.
 		self.num_class = num_class
