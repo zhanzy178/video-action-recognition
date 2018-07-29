@@ -93,7 +93,7 @@ class HMDB51Dataset(data.Dataset):
 				capturer.release()
 			print '/t====> %d/%d frames prepared'%(i, lines_len),
 			
-		print('...frames prepared')
+		print('...%d frames prepared'%i)
 				
 
 
