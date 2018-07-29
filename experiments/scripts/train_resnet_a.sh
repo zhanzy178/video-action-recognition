@@ -54,7 +54,7 @@ CUDA_VISIBLE_DEVICES=0 python ./tools/train_resnet_a.py \
     $FrameDir \
     $MetaPath \
     $TrainListPath \
-    $TestListPath \ 
+    $TestListPath \
     --num-frame $num_frame \
     --refresh $refresh \
     -n $num \

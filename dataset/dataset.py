@@ -31,7 +31,7 @@ class HMDB51Dataset(data.Dataset):
 		self.class_dict = []
 		with open(meta_path, 'r') as f:
 			for line in f.readlines():
-				class_dict.append(line.strip())
+				self.class_dict.append(line.strip())
 
 		# Get sample_list, label_list
 		video_path_list = []
@@ -89,7 +89,7 @@ class HMDB51Dataset(data.Dataset):
 				else:
 					break
 			capturer.release()
-			print('/t====> %d/%d'%(i, lines_len), end='')
+			print '/t====> %d/%d'%(i, lines_len),
 			
 			print('...frames prepared')
 				
@@ -109,7 +109,7 @@ class HMDB51Dataset(data.Dataset):
 		"""
 		frames = None
 		for i in range(self.num_frame):
-			img = Image.open(os.path.join(self.sample_list[index], str(i)+'.jpg').convert('RGB') # convert gray to rgb
+			img = Image.open(os.path.join(self.sample_list[index], str(i)+'.jpg')).convert('RGB') # convert gray to rgb
 			if self.input_transform:
 				img = self.input_transform(img)
 			
