@@ -50,3 +50,13 @@ Dataset deployment steps：
           ├── catch
           ...
   ```
+
+
+
+# Model training
+
+Resnet_a models:
+
+- Go to the current directory:`cd xxx/video-action-reconigtion` 
+- Run tensorboard: `bash tensorboard/tensorboard.sh [port]`. e.g `bash tensorboard/tensorboard.sh 7788`
+- Start training with  `bash experiments/scripts/train_resnet_a.sh`
