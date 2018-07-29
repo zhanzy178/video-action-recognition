@@ -1,1 +1,1 @@
-tensorboard --logdir=./experiments/logs --port=7777
+tensorboard --logdir=./experiments/logs --port=$1
