@@ -53,7 +53,7 @@ class HMDB51Dataset(data.Dataset):
 		if not os.path.isdir(frame_dir):
 			os.mkdir(frame_dir)
 		self.frame_dir  = os.path.join(frame_dir, str(num_frame))
-		if os.path.isdir(self.frame_dir):
+		if not os.path.isdir(self.frame_dir):
 			os.mkdir(self.frame_dir)
 		self._create_frames(video_path_list, refresh=refresh)
 		
