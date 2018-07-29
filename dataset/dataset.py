@@ -124,5 +124,5 @@ class HMDB51Dataset(data.Dataset):
 		return frames, self.label_list[index]
 
 	def __len__(self):
-		return len(self.names)
+		return len(self.label_list)
 		# return 1024
