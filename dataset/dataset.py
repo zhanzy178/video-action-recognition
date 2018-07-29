@@ -1,5 +1,5 @@
 # coding=utf-8
-import os, sys
+import os, sys, time
 import torch
 import torch.utils.data as data
 from PIL import Image
@@ -32,22 +32,6 @@ class HMDB51Dataset(data.Dataset):
 		with open(meta_path, 'r') as f:
 			for line in f.readlines():
 				self.class_dict.append(line.strip())
-
-		# Get sample_list, label_list
-		video_path_list = []
-		self.sample_list = []
-		self.label_list = []
-		if self.sample_list == None:
-			with open(self.list_path, 'r') as f:
-				for line in f.readlines():
-					video_name, label = line.split()
-					video_path = os.path.join(self.video_dir, self.class_dict[int(label)], video_name)
-					single_frame_dir = os.path.join(self.frame_dir, os.path.splitext(video_name)[0])
-
-					self.label_list.append(label)
-					video_path_list.append(video_path)
-					self.sample_list.apend(single_frame_dir)
-					
 		
 		# Check frames directory and create frames.
 		if not os.path.isdir(frame_dir):
@@ -55,11 +39,30 @@ class HMDB51Dataset(data.Dataset):
 		self.frame_dir  = os.path.join(frame_dir, str(num_frame))
 		if not os.path.isdir(self.frame_dir):
 			os.mkdir(self.frame_dir)
-		self._create_frames(video_path_list, refresh=refresh)
+		
+		# Get sample_list, label_list
+		video_path_list = []
+		self.sample_list = []
+		self.label_list = []
+		with open(self.list_path, 'r') as f:
+			for line in f.readlines():
+				video_name, label = line.split()
+				video_path = os.path.join(self.video_dir, self.class_dict[int(label)], video_name)
+				single_frame_dir = os.path.join(self.frame_dir, os.path.splitext(video_name)[0])
+
+				self.label_list.append(label)
+				video_path_list.append(video_path)
+				self.sample_list.append(single_frame_dir)
+		
+		# Extract frames.
+		start = time.time()
+		print('====> Checking frames in "%s"'%list_path)
+		self._extract_frames(video_path_list, refresh=refresh)
+		print('...costs %fs'%(time.time()-start))
 		
 
 			
-	def _create_frames(self, video_path_list, refresh=False):
+	def _extract_frames(self, video_path_list, refresh=False):
 		if os.path.isdir(self.frame_dir):
 			shutil.rmtree(self.frame_dir)
 		os.mkdir(self.frame_dir)
@@ -87,13 +90,15 @@ class HMDB51Dataset(data.Dataset):
 							frame_item_path = os.path.join(single_frame_dir, str(ind)+'.jpg')
 							cv2.imwrite(frame_item_path, vframe)
 							ind += 1
+							if ind == len(frame_rand_ind):
+								break
 						c = c + 1
 					else:
 						break
 				capturer.release()
-			print '/t====> %d/%d frames prepared'%(i, lines_len),
+			print '\r====> %d/%d frames prepared'%(i, lines_len),
 			
-		print('...%d frames prepared'%i)
+		print('\n...%d frames prepared'%i)
 				
 
 
