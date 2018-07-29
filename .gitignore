@@ -1,0 +1,4 @@
+data/*
+models/*
+experiments/logs/*
+experiments/history/*
