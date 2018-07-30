@@ -154,7 +154,7 @@ def train_eval(train_loader, val_loader, model, criterion, optimizer, args, epoc
 	losses = AverageMeter()
 	top1 = AverageMeter()
 
-	model.eval()
+	model.train()
 
 	end = time.time()
 	scores = np.zeros((len(train_loader.dataset), args.num_class))
@@ -272,6 +272,7 @@ def validate_eval(val_loader, model, criterion, args, epoch=None, fnames=[]):
 			batch_time=batch_time, top1=top1, loss=losses))
 
 	res_scores = multi_scores(scores, labels, ['precision', 'recall', 'average_precision'])
+	model.train()
 	return top1.avg, losses.avg, res_scores['precision'], res_scores['recall'], res_scores['average_precision']
 
 

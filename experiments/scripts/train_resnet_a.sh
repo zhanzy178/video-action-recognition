@@ -9,7 +9,7 @@ mkdir ./experiments/history
 # Train epoch
 epoch=100
 # Learning rate
-lr=0.0001
+lr=0.001
 # Weight decay
 weight_decay=0.0001
 # Batch size for train
@@ -34,7 +34,7 @@ TrainListPath="data/HMDB51/train_list.txt"
 TestListPath="data/HMDB51/test_list.txt" 
 
 # Number of frames that extract from video.
-num_frame=10
+num_frame=16
 # Refresh flag for clearing frames and create new one.
 refresh=0
 
