@@ -74,7 +74,7 @@ class HMDB51Dataset(data.Dataset):
 				capturer = cv2.VideoCapture(video_path)
 
 				frame_cnt = capturer.get(cv2.CAP_PROP_FRAME_COUNT)
-				frame_splice = np.floor(np.linspace(0, frame_cnt, self.num_frame+1))
+				frame_splice = np.floor(np.linspace(0, frame_cnt-1, self.num_frame+1))
 				frame_rand_ind = [np.random.randint(frame_splice[x], frame_splice[x+1]) for x in range(len(frame_splice)-1)]
 
 				c = 0
