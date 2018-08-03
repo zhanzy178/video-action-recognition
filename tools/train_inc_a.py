@@ -22,7 +22,7 @@ import _init_paths
 from utils.metrics import AverageMeter, accuracy, multi_scores
 from utils.checkpoint import Checkpoint
 
-from networks.Resnet_a import Resnet_a as Resnet_a
+from networks.Inception_a import Inception_a as Inception_a
 from dataset.loader import get_test_loader, get_train_loader
 
 model_names = sorted(name for name in models.__dict__
@@ -64,7 +64,7 @@ parser.add_argument('--world-size', default=1, type=int,
 					help='number of distributed processes')
 parser.add_argument('-n', '--num-class', default=3, type=int, metavar='N',
 					help='number of classes / categories')
-parser.add_argument('--crop-size',default=224, type=int,
+parser.add_argument('--crop-size',default=299, type=int,
 					help='crop size')
 parser.add_argument('--scale-size',default=256, type=int,
 					help='input size')
@@ -100,7 +100,7 @@ def main():
 
 	# Load Resnet_a network.
 	print '====> Loading the network...'
-	model = Resnet_a(num_class=args.num_class, num_frame=args.num_frame, pretrained=True)
+	model = Inception_a(num_class=args.num_class, num_frame=args.num_frame, pretrained=True)
 
 	"""Load checkpoint and weight of network.
 	"""

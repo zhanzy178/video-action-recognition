@@ -22,7 +22,7 @@ import _init_paths
 from utils.metrics import AverageMeter, accuracy, multi_scores
 from utils.checkpoint import Checkpoint
 
-from networks.Resnet_a import Resnet_a as Resnet_a
+from networks.Resnet_c import Resnet_c as Resnet_c
 from dataset.loader import get_test_loader, get_train_loader
 
 model_names = sorted(name for name in models.__dict__
@@ -100,7 +100,7 @@ def main():
 
 	# Load Resnet_a network.
 	print '====> Loading the network...'
-	model = Resnet_a(num_class=args.num_class, num_frame=args.num_frame, pretrained=True)
+	model = Resnet_c(num_class=args.num_class, num_frame=args.num_frame, pretrained=True)
 
 	"""Load checkpoint and weight of network.
 	"""

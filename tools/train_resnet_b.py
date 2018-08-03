@@ -22,7 +22,7 @@ import _init_paths
 from utils.metrics import AverageMeter, accuracy, multi_scores
 from utils.checkpoint import Checkpoint
 
-from networks.Resnet_a import Resnet_a as Resnet_a
+from networks.Resnet_b import Resnet_b as Resnet_b
 from dataset.loader import get_test_loader, get_train_loader
 
 model_names = sorted(name for name in models.__dict__
@@ -98,9 +98,9 @@ def main():
 	train_loader = get_train_loader(args)
 	test_loader = get_test_loader(args)
 
-	# Load Resnet_a network.
+	# Load Resnet_b network.
 	print '====> Loading the network...'
-	model = Resnet_a(num_class=args.num_class, num_frame=args.num_frame, pretrained=True)
+	model = Resnet_b(num_class=args.num_class, num_frame=args.num_frame, pretrained=True)
 
 	"""Load checkpoint and weight of network.
 	"""
@@ -109,15 +109,17 @@ def main():
 		cp_recorder = Checkpoint(args.checkpoint_dir, args.checkpoint_name)
 		cp_recorder.load_checkpoint(model)
 	
-	model = nn.DataParallel(model)
+	model=nn.DataParallel(model)
 	model.cuda()
+	# model.cuda()
 	criterion = nn.CrossEntropyLoss().cuda()
 	cudnn.benchmark = True
 	
-	# optimizer = torch.optim.SGD(model.module.classifier.parameters(), lr=args.lr, weight_decay=args.wd, momentum=args.momentum)
+	# Fix resnet50
+	# optimizer = torch.optim.SGD([{'params':model.module.resnet50[7].parameters()},{'params': model.module.classifier.parameters()}], lr=args.lr, weight_decay=args.wd, momentum=args.momentum)
 	optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.wd, momentum=args.momentum)
 			
-	# Train Resnet_a model.
+	# Train Resnet_b model.
 	print '====> Training...'
 	for epoch in range(cp_recorder.contextual['b_epoch'], args.epoch):
 		_, _, prec_tri, rec_tri, ap_tri = train_eval(train_loader, test_loader, model, criterion, optimizer, args, epoch)
@@ -159,9 +161,12 @@ def train_eval(train_loader, val_loader, model, criterion, optimizer, args, epoc
 
 	model.train()
 	
-	# Fix resnet50.
-	# model.module.resnet50.eval()
-
+	# bn1, layer1, layer2, layer3
+	# model.module.resnet50[1].eval()
+	# model.module.resnet50[4].eval()
+	# model.module.resnet50[5].eval()
+	# model.module.resnet50[6].eval()
+	
 	end = time.time()
 	scores = np.zeros((len(train_loader.dataset), args.num_class))
 	labels = np.zeros((len(train_loader.dataset), ))
@@ -177,8 +182,13 @@ def train_eval(train_loader, val_loader, model, criterion, optimizer, args, epoc
 			continue
 		target = target.cuda(async=True)
 		frames = frames.cuda()
+		# if torch.cuda.device_count() > 1:
+		# 	output = nn.parallel.data_parallel(model, frames)
+                # else:
+		# 	output = model(frames)
 		output = model(frames)
-		
+
+			
 		loss = criterion(output, target)
 		losses.update(loss.item(), target.size(0))
 		prec1 = accuracy(output.data, target)
@@ -278,7 +288,6 @@ def validate_eval(val_loader, model, criterion, args, epoch=None, fnames=[]):
 			batch_time=batch_time, top1=top1, loss=losses))
 
 	res_scores = multi_scores(scores, labels, ['precision', 'recall', 'average_precision'])
-	model.train()
 	return top1.avg, losses.avg, res_scores['precision'], res_scores['recall'], res_scores['average_precision']
 
 
