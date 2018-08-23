@@ -22,7 +22,7 @@ import _init_paths
 from utils.metrics import AverageMeter, accuracy, multi_scores
 from utils.checkpoint import Checkpoint
 
-from networks.LSTM_r import LSTM_r as LSTM_r
+from networks.Resnet_dual import Resnet_dual as Resnet_dual
 from dataset.loader import get_test_loader, get_train_loader
 
 model_names = sorted(name for name in models.__dict__
@@ -38,8 +38,12 @@ parser.add_argument('frame', metavar='DIR', help='Directory to HMDB51 frame')
 parser.add_argument('meta', metavar='DIR', help='Path to HMDB51 51 class meta information')
 parser.add_argument('trainlist', metavar='DIR', help='Path to HMDB51 train list')
 parser.add_argument('testlist', metavar='DIR', help='Path to HMDB51 test list')
+parser.add_argument('train_objectlist', metavar='DIR', help='Path to HMDB51 train object list')
+parser.add_argument('test_objectlist', metavar='DIR', help='Path to HMDB51 test object list')
 parser.add_argument('--num-frame', default=10, type=int,
 					help='Number of frames that extract from video')
+parser.add_argument('--num-object', default=10, type=int,
+					help='Number of object from every frames that extract from video')
 parser.add_argument('--refresh', default=0, type=int,
 					help='Refresh flag for clearing frames and create new one')
 
@@ -95,12 +99,12 @@ def main():
 
 	# Create dataloader.
 	print '\n====> Creating dataloader...'
-	train_loader = get_train_loader(args)
-	test_loader = get_test_loader(args)
+	train_loader = get_train_loader(args, dataset='HMDB51Dataset_dual')
+	test_loader = get_test_loader(args, dataset='HMDB51Dataset_dual')
 
 	# Load Resnet_a network.
 	print '====> Loading the network...'
-	model = LSTM_r(num_class=args.num_class, num_frame=args.num_frame, pretrained=True)
+	model = Resnet_dual(num_class=args.num_class, num_frame=args.num_frame, num_object=args.num_object, pretrained=True)
 
 	"""Load checkpoint and weight of network.
 	"""
@@ -176,17 +180,18 @@ def train_eval(train_loader, val_loader, model, criterion, optimizer, args, epoc
 	if epoch == cp_recorder.contextual['b_epoch']:
 		b_batch = cp_recorder.contextual['b_batch']+1
 	
-	for i, (frames, target) in enumerate(train_loader):
+	for i, (frames, objects, target) in enumerate(train_loader):
 		# Jump to contextual batch
 		if i < b_batch:
 			continue
 		target = target.cuda(async=True)
 		frames = frames.cuda()
+		objects = objects.cuda()
 		# if torch.cuda.device_count() > 1:
 		# 	output = nn.parallel.data_parallel(model, frames)
                 # else:
 		# 	output = model(frames)
-		output = model(frames)
+		output = model(frames, objects)
 
 			
 		loss = criterion(output, target)
@@ -258,11 +263,12 @@ def validate_eval(val_loader, model, criterion, args, epoch=None, fnames=[]):
 	end = time.time()
 	scores = np.zeros((len(val_loader.dataset), args.num_class))
 	labels = np.zeros((len(val_loader.dataset), ))
-	for i, (frames, target) in enumerate(val_loader):
+	for i, (frames, objects, target) in enumerate(val_loader):
 		with torch.no_grad():
 			target = target.cuda(async=True)
 			frames = frames.cuda()
-			output = model(frames)
+			objects = objects.cuda()
+			output = model(frames, objects)
 			
 			loss = criterion(output, target)
 			losses.update(loss.item(), target.size(0))
@@ -286,7 +292,8 @@ def validate_eval(val_loader, model, criterion, args, epoch=None, fnames=[]):
 		'*Loss {loss.avg:.4f}  '
 		'*Prec@1 {top1.avg:.3f}'.format(epoch, args.epoch, batch_time.sum/60,
 			batch_time=batch_time, top1=top1, loss=losses))
-
+	
+	model.train()
 	res_scores = multi_scores(scores, labels, ['precision', 'recall', 'average_precision'])
 	return top1.avg, losses.avg, res_scores['precision'], res_scores['recall'], res_scores['average_precision']
 

@@ -1,2 +1,1 @@
-source activate zzy
-jupyter lab --NotebookApp.config_file='~/.Z/utils/.jupyter/jupyter_notebook_config.py'
+jupyter lab --NotebookApp.config_file=${1}  #'./.jupyter/jupyter_notebook_config.py'

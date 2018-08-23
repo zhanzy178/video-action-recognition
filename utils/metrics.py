@@ -34,9 +34,7 @@ import numpy as np
 from sklearn.preprocessing import OneHotEncoder
 
 def multi_scores(pre_scores, labels, options=['precision', 'recall', 'average_precision']):
-	"""Make use of metrics.precision_score, metrics.recall_score, metrics.average_precision_score.
-	
-	The AP version in sklearn is VOC2010.
+	"""Make use of metrics.precision_score, metrics.recall_score, metrics.average_precision_score
 	"""
 	pre_scores = np.nan_to_num(pre_scores)
 	result = {}

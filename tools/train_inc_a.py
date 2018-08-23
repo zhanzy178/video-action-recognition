@@ -33,6 +33,7 @@ parser = argparse.ArgumentParser(description='PyTorch Relationship')
 
 """The dataset file arguments.
 """
+parser.add_argument('dataset', metavar='DIR', help='Dataset')
 parser.add_argument('video', metavar='DIR', help='Directory to HMDB51 video')
 parser.add_argument('frame', metavar='DIR', help='Directory to HMDB51 frame')
 parser.add_argument('meta', metavar='DIR', help='Path to HMDB51 51 class meta information')
@@ -66,7 +67,7 @@ parser.add_argument('-n', '--num-class', default=3, type=int, metavar='N',
 					help='number of classes / categories')
 parser.add_argument('--crop-size',default=299, type=int,
 					help='crop size')
-parser.add_argument('--scale-size',default=256, type=int,
+parser.add_argument('--scale-size',default=320, type=int,
 					help='input size')
 
 
@@ -101,6 +102,14 @@ def main():
 	# Load Resnet_a network.
 	print '====> Loading the network...'
 	model = Inception_a(num_class=args.num_class, num_frame=args.num_frame, pretrained=True)
+	
+	# Load single frame pretrain.
+	pretrain_model = torch.load('models/pretrain_inc_sf.pth')
+	keys = model.state_dict().keys()
+	new_state_dict = {}
+	for i, k in enumerate(pretrain_model.keys()):
+		new_state_dict[keys[i]] = pretrain_model[k]
+	model.load_state_dict(new_state_dict)
 
 	"""Load checkpoint and weight of network.
 	"""
@@ -126,20 +135,23 @@ def main():
 		# Print result.
 		writer.add_scalars('mAP (per epoch)', {'train': np.nan_to_num(ap_tri).mean()}, epoch)
 		writer.add_scalars('mAP (per epoch)', {'valid': np.nan_to_num(ap_val).mean()}, epoch)
-		print('\n====> Scores')
-		print('[Epoch {0}]:\n'
-			'  Train:\n'
-			'    Prec@1 {1}\n'
-			'    Recall {2}\n'
-			'    AP {3}\n'
-			'    mAP {4:.3f}\n'
-			'  Valid:\n'
-			'    Prec@1 {5}\n'
-			'    Recall {6}\n'
-			'    AP {7}\n'
-			'    mAP {8:.3f}\n'.format(epoch, 
-				prec_tri, rec_tri, ap_tri, np.nan_to_num(ap_tri).mean(),
-				prec_val, rec_val, ap_val, np.nan_to_num(ap_val).mean()))
+		
+		print_score = False
+		if print_score:
+			print('\n====> Scores')
+			print('[Epoch {0}]:\n'
+				'  Train:\n'
+				'    Prec@1 {1}\n'
+				'    Recall {2}\n'
+				'    AP {3}\n'
+				'    mAP {4:.3f}\n'
+				'  Valid:\n'
+				'    Prec@1 {5}\n'
+				'    Recall {6}\n'
+				'    AP {7}\n'
+				'    mAP {8:.3f}\n'.format(epoch, 
+					prec_tri, rec_tri, ap_tri, np.nan_to_num(ap_tri).mean(),
+					prec_val, rec_val, ap_val, np.nan_to_num(ap_val).mean()))
 		
 
 		# Record.

@@ -9,19 +9,20 @@ mkdir ./experiments/history
 # Train epoch
 epoch=100
 # Learning rate
-lr=0.0001
+lr=0.001
 # Weight decay
-weight_decay=0.00001
+weight_decay=0.0001
 # Batch size for train
 batch_size=8
 # momentum
 momentum=0.9
 # Number of classes
-num=51
+num=400
 # Worker number
 worker=7
 
 ################## Dataset arguments ###############
+Dataset="HMDB51Dataset_a"
 # Directory to HMDB51 video
 VideoDir="data/HMDB51/video"
 # Directory to HMDB51 frame
@@ -31,7 +32,7 @@ MetaPath="data/HMDB51/meta.txt"
 # Path to HMDB51 train list
 TrainListPath="data/HMDB51/train_list.txt" 
 # Path to HMDB51 test list
-TestListPath="data/HMDB51/test_list.txt" 
+TestListPath="data/HMDB51/test_list.txt"
 
 # Number of frames that extract from video.
 num_frame=16
@@ -41,15 +42,16 @@ refresh=0
 
 ################## Record arguments ###############
 # Path to save scores
-ResultPath="experiments/logs/lstm_r"
+ResultPath="experiments/logs/hmdb_resnet_a"
 # Print frequence
 print_freq=100
 # Dir to load/save model checkpoint
 CheckpointDir="models/"
 # File name
-FileName="lstm_r"
+FileName="hmdb_resnet_a"
 
-CUDA_VISIBLE_DEVICES=6,7 python ./tools/train_lstm_r.py \
+CUDA_VISIBLE_DEVICES=6,7 python ./tools/train_resnet_a.py \
+    $Dataset \
     $VideoDir \
     $FrameDir \
     $MetaPath \

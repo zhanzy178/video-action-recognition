@@ -9,11 +9,11 @@ mkdir ./experiments/history
 # Train epoch
 epoch=100
 # Learning rate
-lr=0.001
+lr=0.0001
 # Weight decay
 weight_decay=0.0001
 # Batch size for train
-batch_size=2
+batch_size=8
 # momentum
 momentum=0.9
 # Number of classes
@@ -22,6 +22,7 @@ num=51
 worker=7
 
 ################## Dataset arguments ###############
+Dataset="HMDB51Dataset_a"
 # Directory to HMDB51 video
 VideoDir="data/HMDB51/video"
 # Directory to HMDB51 frame
@@ -41,15 +42,16 @@ refresh=0
 
 ################## Record arguments ###############
 # Path to save scores
-ResultPath="experiments/logs/inception_a"
+ResultPath="experiments/logs/hmdb_inception_a"
 # Print frequence
 print_freq=100
 # Dir to load/save model checkpoint
 CheckpointDir="models/"
 # File name
-FileName="inception_a"
+FileName="hmdb_inception_a"
 
 CUDA_VISIBLE_DEVICES=6,7 python ./tools/train_inc_a.py \
+    $Dataset \
     $VideoDir \
     $FrameDir \
     $MetaPath \

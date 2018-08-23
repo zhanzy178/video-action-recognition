@@ -22,7 +22,7 @@ import _init_paths
 from utils.metrics import AverageMeter, accuracy, multi_scores
 from utils.checkpoint import Checkpoint
 
-from networks.Resnet_c import Resnet_c as Resnet_c
+from networks.LSTM_i import LSTM_i as LSTM_i
 from dataset.loader import get_test_loader, get_train_loader
 
 model_names = sorted(name for name in models.__dict__
@@ -33,6 +33,7 @@ parser = argparse.ArgumentParser(description='PyTorch Relationship')
 
 """The dataset file arguments.
 """
+parser.add_argument('dataset', metavar='DIR', help='Dataset')
 parser.add_argument('video', metavar='DIR', help='Directory to HMDB51 video')
 parser.add_argument('frame', metavar='DIR', help='Directory to HMDB51 frame')
 parser.add_argument('meta', metavar='DIR', help='Path to HMDB51 51 class meta information')
@@ -64,9 +65,9 @@ parser.add_argument('--world-size', default=1, type=int,
 					help='number of distributed processes')
 parser.add_argument('-n', '--num-class', default=3, type=int, metavar='N',
 					help='number of classes / categories')
-parser.add_argument('--crop-size',default=224, type=int,
+parser.add_argument('--crop-size',default=299, type=int,
 					help='crop size')
-parser.add_argument('--scale-size',default=256, type=int,
+parser.add_argument('--scale-size',default=320, type=int,
 					help='input size')
 
 
@@ -100,7 +101,7 @@ def main():
 
 	# Load Resnet_a network.
 	print '====> Loading the network...'
-	model = Resnet_c(num_class=args.num_class, num_frame=args.num_frame, pretrained=True)
+	model = LSTM_i(num_class=args.num_class, num_frame=args.num_frame, pretrained=True)
 
 	"""Load checkpoint and weight of network.
 	"""
@@ -109,12 +110,14 @@ def main():
 		cp_recorder = Checkpoint(args.checkpoint_dir, args.checkpoint_name)
 		cp_recorder.load_checkpoint(model)
 	
-	model = nn.DataParallel(model)
+	model=nn.DataParallel(model)
 	model.cuda()
+	# model.cuda()
 	criterion = nn.CrossEntropyLoss().cuda()
 	cudnn.benchmark = True
 	
-	# optimizer = torch.optim.SGD(model.module.classifier.parameters(), lr=args.lr, weight_decay=args.wd, momentum=args.momentum)
+	# Fix resnet50
+	# optimizer = torch.optim.SGD([{'params':model.module.resnet50[7].parameters()},{'params': model.module.classifier.parameters()}], lr=args.lr, weight_decay=args.wd, momentum=args.momentum)
 	optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.wd, momentum=args.momentum)
 			
 	# Train Resnet_a model.
@@ -126,6 +129,8 @@ def main():
 		# Print result.
 		writer.add_scalars('mAP (per epoch)', {'train': np.nan_to_num(ap_tri).mean()}, epoch)
 		writer.add_scalars('mAP (per epoch)', {'valid': np.nan_to_num(ap_val).mean()}, epoch)
+		
+		"""
 		print('\n====> Scores')
 		print('[Epoch {0}]:\n'
 			'  Train:\n'
@@ -140,7 +145,7 @@ def main():
 			'    mAP {8:.3f}\n'.format(epoch, 
 				prec_tri, rec_tri, ap_tri, np.nan_to_num(ap_tri).mean(),
 				prec_val, rec_val, ap_val, np.nan_to_num(ap_val).mean()))
-		
+		"""
 
 		# Record.
 		writer.add_scalars('Loss (per batch)', {'valid': loss_avg_val}, (epoch+1)*len(train_loader))
@@ -159,9 +164,12 @@ def train_eval(train_loader, val_loader, model, criterion, optimizer, args, epoc
 
 	model.train()
 	
-	# Fix resnet50.
-	# model.module.resnet50.eval()
-
+	# bn1, layer1, layer2, layer3
+	# model.module.resnet50[1].eval()
+	# model.module.resnet50[4].eval()
+	# model.module.resnet50[5].eval()
+	# model.module.resnet50[6].eval()
+	
 	end = time.time()
 	scores = np.zeros((len(train_loader.dataset), args.num_class))
 	labels = np.zeros((len(train_loader.dataset), ))
@@ -177,8 +185,13 @@ def train_eval(train_loader, val_loader, model, criterion, optimizer, args, epoc
 			continue
 		target = target.cuda(async=True)
 		frames = frames.cuda()
+		# if torch.cuda.device_count() > 1:
+		# 	output = nn.parallel.data_parallel(model, frames)
+                # else:
+		# 	output = model(frames)
 		output = model(frames)
-		
+
+			
 		loss = criterion(output, target)
 		losses.update(loss.item(), target.size(0))
 		prec1 = accuracy(output.data, target)
@@ -276,9 +289,8 @@ def validate_eval(val_loader, model, criterion, args, epoch=None, fnames=[]):
 		'*Loss {loss.avg:.4f}  '
 		'*Prec@1 {top1.avg:.3f}'.format(epoch, args.epoch, batch_time.sum/60,
 			batch_time=batch_time, top1=top1, loss=losses))
-
-	res_scores = multi_scores(scores, labels, ['precision', 'recall', 'average_precision'])
 	model.train()
+	res_scores = multi_scores(scores, labels, ['precision', 'recall', 'average_precision'])
 	return top1.avg, losses.avg, res_scores['precision'], res_scores['recall'], res_scores['average_precision']
 
 

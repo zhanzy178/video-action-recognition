@@ -9,47 +9,49 @@ mkdir ./experiments/history
 # Train epoch
 epoch=100
 # Learning rate
-lr=0.001
+lr=0.0001
 # Weight decay
 weight_decay=0.0001
 # Batch size for train
-batch_size=8
+batch_size=4
 # momentum
 momentum=0.9
 # Number of classes
-num=51
+num=400
 # Worker number
 worker=7
 
 ################## Dataset arguments ###############
+Dataset="KineticsDataset_a"
 # Directory to HMDB51 video
-VideoDir="data/HMDB51/video"
+VideoDir="data/kinetics/Kinetics_trimmed_videos"
 # Directory to HMDB51 frame
-FrameDir="data/HMDB51/frame"
+FrameDir="data/kinetics/frame"
 # Path to HMDB51 51 class meta information.
-MetaPath="data/HMDB51/meta.txt"
+MetaPath="data/kinetics/meta.txt"
 # Path to HMDB51 train list
-TrainListPath="data/HMDB51/train_list.txt" 
+TrainListPath="data/kinetics/kinetics_train/kinetics_train.csv"
 # Path to HMDB51 test list
-TestListPath="data/HMDB51/test_list.txt" 
+TestListPath="data/kinetics/kinetics_val/kinetics_val.csv" 
 
 # Number of frames that extract from video.
-num_frame=16
+num_frame=25
 # Refresh flag for clearing frames and create new one.
 refresh=0
 
 
 ################## Record arguments ###############
 # Path to save scores
-ResultPath="experiments/logs/resnet_c"
+ResultPath="experiments/logs/kinetics_lstm_i"
 # Print frequence
-print_freq=100
+print_freq=1000
 # Dir to load/save model checkpoint
 CheckpointDir="models/"
 # File name
-FileName="resnet_c"
+FileName="kinetics_lstm_i"
 
-CUDA_VISIBLE_DEVICES=0 python ./tools/train_resnet_c.py \
+CUDA_VISIBLE_DEVICES=6,7 python ./tools/train_lstm_i.py \
+    $Dataset \
     $VideoDir \
     $FrameDir \
     $MetaPath \

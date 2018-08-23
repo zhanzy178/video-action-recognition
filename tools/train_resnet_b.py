@@ -286,7 +286,7 @@ def validate_eval(val_loader, model, criterion, args, epoch=None, fnames=[]):
 		'*Loss {loss.avg:.4f}  '
 		'*Prec@1 {top1.avg:.3f}'.format(epoch, args.epoch, batch_time.sum/60,
 			batch_time=batch_time, top1=top1, loss=losses))
-
+	model.train()
 	res_scores = multi_scores(scores, labels, ['precision', 'recall', 'average_precision'])
 	return top1.avg, losses.avg, res_scores['precision'], res_scores['recall'], res_scores['average_precision']
 

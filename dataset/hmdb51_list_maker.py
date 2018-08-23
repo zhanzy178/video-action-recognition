@@ -3,6 +3,9 @@ import numpy as np
 import os
 import argparse
 
+"""
+$ python hmdb51_list_maker.py data/HMDB51
+"""
 
 parser = argparse.ArgumentParser(description='HMDB51 test/train list maker')
 parser.add_argument('data', metavar='DIR', help='path to dataset')
@@ -27,16 +30,21 @@ def make_test_train_list():
 	test_list = []
 	test_label = []
 	for i, c in enumerate(class_meta):
-		filepath = os.path.join(split_path, c + '_test_split1.txt')
-		with open(filepath, 'r') as f:
-			for line in f.readlines():
-				video_name, id = line.split()
-				if id == '1':
-					train_list.append(video_name)
-					train_label.append(i)
-				elif id == '2':
-					test_list.append(video_name)
-					test_label.append(i)
+		for split in range(1, 2):
+			filepath = os.path.join(split_path, c + '_test_split' + str(split) + '.txt')
+			with open(filepath, 'r') as f:
+				for line in f.readlines():
+					video_name, id = line.split()
+					if id == '1':
+						# if video_name in train_list: continue
+						train_list.append(video_name)
+						train_label.append(i)
+					elif id == '2':
+						# if video_name in test_list: continue
+						test_list.append(video_name)
+						test_label.append(i)
+	
+
 	
 	r_train_ind = np.arange(len(train_list))
 	np.random.shuffle(r_train_ind)

@@ -16,19 +16,14 @@ class Resnet_a(nn.Module):
 		self.num_frame = num_frame
 
 		# Layers.
-		self.resnet = models.resnet50(pretrained=pretrained)
-		self.resnet = nn.Sequential(*list(self.resnet.children())[:-1])
-
-		self.classifier = nn.Linear(2048, self.num_class)
-		# self.classifier = nn.Linear(512, self.num_class)
+		self.resnet50 = models.resnet50(pretrained=pretrained)
+		self.resnet50.fc = nn.Linear(2048, self.num_class)
 		self.avgpool = nn.AvgPool2d((self.num_frame, 1), 1)
 		
 
 	# x1 = pu, x2 = p1, x3 = p2, x4 = bbox geometric info
 	def forward(self, x):
 		x = x.view(-1, 3, 224, 224)
-		x = self.resnet(x).view(-1, 2048)
-		# x = self.resnet(x).view(-1, 512)
-		x = self.classifier(x).view(-1, 1, self.num_frame, self.num_class)
+		x = self.resnet50(x).view(-1, 1, self.num_frame, self.num_class) 
 		x = self.avgpool(x).view(-1, self.num_class)
 		return x
